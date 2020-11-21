@@ -1,3 +1,5 @@
+👨‍🏫 A tiny demo showing a step-based form with the help of react, xstate and react hook form.
+
 # New Project
 
 > ✨ Bootstrapped with Create Snowpack App (CSA).
