@@ -1,5 +1,25 @@
 👨‍🏫 A tiny demo showing a step-based form with the help of react, xstate and react hook form.
 
+## Idea
+
+The form consists of 4 steps:
+
+### Enter a name
+
+Just a basic string input with a hint field with numorous requirements. If requirements are not met a error message is show.
+
+### Choose a animal
+
+Select rectangles.
+
+### Choose a adjective
+
+Input with suggestions.
+
+### Aggree terms
+
+Some text and a checkbox.
+
 # New Project
 
 > ✨ Bootstrapped with Create Snowpack App (CSA).

@@ -4,13 +4,17 @@ import { Machine, Sender, assign } from 'xstate';
 import { createUser, updateUser } from './lib/user';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import styled from 'styled-components';
+import { Input } from './components/Input';
+import { Button, SubmitButton } from './components/Button';
+import { Stepper } from './components/Stepper';
 
 interface newUserSchema {
   states: {
     name: {};
-    email: {};
-    password: {};
-    confirmation: {};
+    animal: {};
+    adjective: {};
+    terms: {};
+    success: {};
   };
 }
 
@@ -18,8 +22,9 @@ interface newUserContext {
   user: {
     id?: number;
     name?: string;
-    email?: string;
-    secret?: string;
+    animal?: string;
+    adjective?: string;
+    terms?: boolean;
   };
 }
 
@@ -39,15 +44,15 @@ const toggleMachine = Machine<newUserContext, newUserSchema, newUserEvent>(
       name: {
         on: {
           NEXT: {
-            target: 'email',
+            target: 'animal',
             actions: 'storeUserInContext',
           },
         },
       },
-      email: {
+      animal: {
         on: {
           NEXT: {
-            target: 'password',
+            target: 'adjective',
             actions: 'storeUserInContext',
           },
           PREV: {
@@ -55,22 +60,30 @@ const toggleMachine = Machine<newUserContext, newUserSchema, newUserEvent>(
           },
         },
       },
-      password: {
+      adjective: {
         on: {
           NEXT: {
-            target: 'confirmation',
+            target: 'terms',
             actions: 'storeUserInContext',
           },
           PREV: {
-            target: 'email',
+            target: 'animal',
           },
         },
       },
-      confirmation: {
+      terms: {
+        on: {
+          NEXT: { target: 'success' },
+          PREV: {
+            target: 'adjective',
+          },
+        },
+      },
+      success: {
         on: {
           NEXT: { target: 'name' },
           PREV: {
-            target: 'password',
+            target: 'adjective',
           },
         },
       },
@@ -105,28 +118,30 @@ const Name: React.FunctionComponent<{
   return (
     <>
       <h3>Please enter a name</h3>
-      <div>{JSON.stringify(context)}</div>
+      {/* <div>{JSON.stringify(context)}</div> */}
       <form onSubmit={handleSubmit(onSubmit)}>
-        <input
+        <Input
           name="name"
           defaultValue={context.user.name || ''}
           placeholder="name"
           ref={register({ required: true })}
         />
         {errors.name && <span>This field is required</span>}
-        <input type="submit" disabled={isSubmitting} />
-        <button onClick={() => send({ type: 'PREV' })}>Prev</button>
+        <SubmitButton type="submit" disabled={isSubmitting} />
+        <Button type="button" onClick={() => send({ type: 'PREV' })}>
+          Prev
+        </Button>
       </form>
     </>
   );
 };
 
-const Email: React.FunctionComponent<{
+const Animal: React.FunctionComponent<{
   context: newUserContext;
   send: Sender<newUserEvent>;
 }> = ({ context, send }) => {
   const { register, handleSubmit, errors, formState } = useForm<{
-    email: string;
+    animal: string;
   }>();
   const { isSubmitting } = formState;
 
@@ -144,12 +159,12 @@ const Email: React.FunctionComponent<{
       <div>{JSON.stringify(context)}</div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <input
-          name="email"
-          placeholder="test@test.com"
-          defaultValue={context.user.email}
+          name="animal"
+          placeholder="🐱‍👤"
+          defaultValue={context.user.animal}
           ref={register({ required: true })}
         />
-        {errors.email && <span>This field is required</span>}
+        {errors.animal && <span>This field is required</span>}
         <input type="submit" disabled={isSubmitting} />
         <button onClick={() => send({ type: 'PREV' })}>Prev</button>
       </form>
@@ -157,17 +172,17 @@ const Email: React.FunctionComponent<{
   );
 };
 
-const Password: React.FunctionComponent<{
+const Adjective: React.FunctionComponent<{
   context: newUserContext;
   send: Sender<newUserEvent>;
 }> = ({ context, send }) => {
   const { register, handleSubmit, errors, formState } = useForm<{
-    password: string;
+    adjective: string;
   }>();
 
   const { isSubmitting } = formState;
 
-  const onSubmit: SubmitHandler<{ password: string }> = async (data) => {
+  const onSubmit: SubmitHandler<{ adjective: string }> = async (data) => {
     try {
       const user = await updateUser(context.user.id as number, data);
       send({ type: 'NEXT', user: user });
@@ -181,12 +196,12 @@ const Password: React.FunctionComponent<{
       <div>{JSON.stringify(context)}</div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <input
-          name="password"
-          placeholder="secret"
-          defaultValue={context.user.secret}
+          name="adjective"
+          placeholder="adjective"
+          defaultValue={context.user.adjective}
           ref={register({ required: true })}
         />
-        {errors.password && <span>This field is required</span>}
+        {errors.adjective && <span>This field is required</span>}
         <input type="submit" disabled={isSubmitting} />
         <button onClick={() => send({ type: 'PREV' })}>Prev</button>
       </form>
@@ -194,7 +209,18 @@ const Password: React.FunctionComponent<{
   );
 };
 
-const Confirmation: React.FunctionComponent<{
+const Terms: React.FunctionComponent<{
+  context: newUserContext;
+}> = ({ context }) => {
+  return (
+    <>
+      <h3>Terms</h3>
+      <div>{JSON.stringify(context)}</div>
+    </>
+  );
+};
+
+const Success: React.FunctionComponent<{
   context: newUserContext;
 }> = ({ context }) => {
   return (
@@ -205,36 +231,96 @@ const Confirmation: React.FunctionComponent<{
   );
 };
 
+const Wrapper = styled.div`
+  width: 60%;
+  height: 60%;
+  background: #ffffff;
+  box-shadow: 0px 16px 24px rgba(0, 0, 0, 0.06), 0px 2px 6px rgba(0, 0, 0, 0.04),
+    0px 0px 1px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  z-index: 1;
+
+  & > div {
+    margin: 1rem;
+  }
+`;
+
+const Debugger = styled.div`
+  width: 60%;
+  height: 6rem;
+  margin-top: -1.5rem;
+  background: rgba(255, 255, 255, 0.37);
+  backdrop-filter: blur(1px);
+  /* Note: backdrop-filter has minimal browser support */
+
+  border-radius: 12px;
+`;
+
+const StepWizardContainer = styled.main`
+  display: flex;
+`;
+
+const Progress = styled.div`
+  flex: 1;
+
+  /* Just for testing purpose */
+  background-color: lightgray;
+`;
+
+const StepContainer = styled.div`
+  flex: 2;
+  background-color: lightgoldenrodyellow;
+`;
+
 export const Toggler = () => {
   const [state, send] = useMachine(toggleMachine);
+  const [steps, setSteps] = React.useState<
+    { name: string; value: string; status: string }[]
+  >([]);
 
-  const Wrapper = styled.div`
-    width: 60%;
-    height: 60%;
-    padding: 0.2rem;
-    background-color: #313336;
-    border-radius: 0.4rem;
-    box-shadow: 0 2.8px 2.2px -30px rgba(0, 0, 0, 0.02),
-      0 6.7px 5.3px -30px rgba(0, 0, 0, 0.028),
-      0 12.5px 10px -30px rgba(0, 0, 0, 0.035),
-      0 22.3px 17.9px -30px rgba(0, 0, 0, 0.042),
-      0 41.8px 33.4px -30px rgba(0, 0, 0, 0.05),
-      0 100px 80px -30px rgba(0, 0, 0, 0.07);
-  `;
+  React.useEffect(() => {
+    setSteps(
+      Object.keys(toggleMachine.states).map((step) => ({
+        name: step,
+        /* Error should be investigated */
+        value: state.context.user[step] || '',
+        status: state.matches(step)
+          ? 'current'
+          : state.context.user[step]
+          ? 'done'
+          : 'undone',
+      })),
+    );
+  }, [state]);
 
   return (
-    <Wrapper>
-      {state.matches('name') ? (
-        <Name context={state.context} send={send} />
-      ) : state.matches('email') ? (
-        <Email context={state.context} send={send} />
-      ) : state.matches('password') ? (
-        <Password context={state.context} send={send} />
-      ) : state.matches('confirmation') ? (
-        <Confirmation context={state.context} />
-      ) : (
-        <div>undefined</div>
-      )}
-    </Wrapper>
+    <>
+      <Wrapper>
+        <div>
+          <h1>Get your spirit animal</h1>
+          <StepWizardContainer>
+            <Progress>
+              <Stepper steps={steps} />
+            </Progress>
+            <StepContainer>
+              {state.matches('name') ? (
+                <Name context={state.context} send={send} />
+              ) : state.matches('animal') ? (
+                <Animal context={state.context} send={send} />
+              ) : state.matches('adjective') ? (
+                <Adjective context={state.context} send={send} />
+              ) : state.matches('terms') ? (
+                <Terms context={state.context} />
+              ) : state.matches('success') ? (
+                <Success context={state.context} />
+              ) : (
+                <div>undefined</div>
+              )}
+            </StepContainer>
+          </StepWizardContainer>
+        </div>
+      </Wrapper>
+      <Debugger></Debugger>
+    </>
   );
 };
